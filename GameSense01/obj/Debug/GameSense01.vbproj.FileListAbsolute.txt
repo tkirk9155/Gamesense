@@ -1,0 +1,16 @@
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\GameSense01.exe.config
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\GameSense01.exe
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\GameSense01.pdb
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\GameSense01.xml
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\Newtonsoft.Json.pdb
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.vbprojAssemblyReference.cache
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.frmMain.resources
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.Resources.resources
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.vbproj.GenerateResource.cache
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.vbproj.CoreCompileInputs.cache
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.vbproj.CopyComplete
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.exe
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.xml
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.pdb
