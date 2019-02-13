@@ -12,23 +12,23 @@ Module modMain
 
     Public Function GetSSE3Address() As Boolean
 
-        Dim result As Boolean = False
-        Dim jsonAddressStr As String = String.Empty
-        Dim corePropsFileNm As String = Environment.GetEnvironmentVariable("ProgramData") & "\\SteelSeries\\SteelSeries Engine 3\\coreProps.json"
+        'Dim result As Boolean = False
+        'Dim jsonAddressStr As String = String.Empty
+        'Dim corePropsFileNm As String = Environment.GetEnvironmentVariable("ProgramData") & "\\SteelSeries\\SteelSeries Engine 3\\coreProps.json"
 
-        jsonAddressStr = My.Computer.FileSystem.ReadAllText(corePropsFileNm)
+        'jsonAddressStr = My.Computer.FileSystem.ReadAllText(corePropsFileNm)
 
-        Try
-            Dim jsonObj As JObject = JObject.Parse(jsonAddressStr)
-            SSE3_URL = "http://" & jsonObj.GetValue("address").ToString()
-            result = True
-        Catch ex As Exception
-            result = False
-        End Try
+        'Try
+        '    Dim jsonObj As JObject = JObject.Parse(jsonAddressStr)
+        '    SSE3_URL = "http://" & jsonObj.GetValue("address").ToString()
+        '    result = True
+        'Catch ex As Exception
+        '    result = False
+        'End Try
 
-        If SSE3_URL.Length <= 0 Then result = False
+        'If SSE3_URL.Length <= 0 Then result = False
 
-        Return result
+        'Return result
 
     End Function
 
