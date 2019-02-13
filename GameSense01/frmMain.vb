@@ -9,11 +9,6 @@ Public Class frmMain
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error)
         Else
-            'Dim thrKbd As New Thread(AddressOf sendKbdEvent)
-            'While True
-            '    thrKbd.Start()
-            '    Thread.Sleep(5000)
-            'End While
             SendKbdEvent()
         End If
 

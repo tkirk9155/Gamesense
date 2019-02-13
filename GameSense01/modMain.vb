@@ -8,6 +8,7 @@ Imports System.Threading
 Module modMain
 
     Public SSE3_URL As String
+    Private threadHeartbeat As Thread
 
     Public Function GetSSE3Address() As Boolean
 
@@ -34,101 +35,99 @@ Module modMain
 
     Public Sub SendKbdEvent()
 
-        SetupHandlers()
+        RegisterExe()
+        BindEvent()
+        threadHeartbeat = New Thread(AddressOf SendEvent)
+        threadHeartbeat.Start()
 
     End Sub
 
 
     Private Sub ExecutePost(ByVal sse3Address As String, ByVal jsonData As String)
 
-        Dim request As HttpWebRequest = WebRequest.CreateHttp(sse3Address)
+        Dim jsonBytes As Byte() = System.Text.Encoding.UTF8.GetBytes(jsonData)
 
-        Dim jsonBytes As Byte() = System.Text.Encoding.Unicode.GetBytes(jsonData)
+        Dim req As HttpWebRequest = WebRequest.CreateHttp(New Uri(sse3Address))
+        req.ContentType = "application/json"
+        req.Method = "POST"
+        req.ContentLength = jsonBytes.Length
 
-        With request
-            .Method = HttpMethod.Post.Method
-            .ContentType = "application/json"
-            .ContentLength = jsonBytes.Length
-        End With
-
-        Using writer = request.GetRequestStream()
-            writer.Write(jsonBytes, 0, jsonBytes.Length)
-            writer.Close()
+        Using stream = req.GetRequestStream()
+            stream.Write(jsonBytes, 0, req.ContentLength)
+            stream.Close()
         End Using
 
-        Dim resultString As String = ""
-        Using reader As New StreamReader(request.GetResponse().GetResponseStream())
-            resultString = reader.ReadToEnd()
-            reader.Close()
-        End Using
+        ' just for debugging
+        Try
+            Dim response = req.GetResponse().GetResponseStream()
+
+        Catch ex As System.Net.WebException
+            If ex.Status = WebExceptionStatus.ProtocolError Then
+                Using sr = ex.Response.GetResponseStream()
+                    Dim f As String = New StreamReader(sr).ReadToEnd()
+                    MessageBox.Show(f)
+                End Using
+            End If
+        End Try
 
     End Sub
 
 
-    Private Sub SetupHandlers()
 
-        'Dim mainBinding As New JObject From {
-        '    {"game", "MY_MAIN"},
-        '    {"event", "timer"}}
+    Private Sub SendEvent()
 
-        Dim mainBinding As New JObject From {
-            New JProperty("game", "MY_MAIN"),
-            New JProperty("event", "timer")}
+        While True
+            Dim json As String = "
+        {
+            ""game"": ""MY_MAIN"",
+            ""event"": ""CHANGE_COLOR"",
+            ""data"": { ""percent"": 75}
+        }"
 
-        Dim hdArr As New JArray
+            ExecutePost(SSE3_URL & "/game_event", json)
+            Thread.Sleep(2000)
+        End While
 
-        'Dim hdKbd As New JObject From {
-        '    {"device-type", "keyboard"},
-        '    {"zone", "function-keys"},
-        '    {"mode", "percent"}}
-
-        Dim hdKbd As New JObject From {
-            New JProperty("device-type", "keyboard"),
-            New JProperty("zone", "function-keys"),
-            New JProperty("mode", "percent")}
-
-        'Dim jZeroColor As New JObject From {
-        '    {"red", 255},
-        '    {"green", 0},
-        '    {"blue", 0}}
-
-        Dim jZeroColor As New JObject From {
-            New JProperty("red", 255),
-            New JProperty("green", 0),
-            New JProperty("blue", 0)}
-
-        'Dim jHundoColor As New JObject From {
-        '    {"red", 0},
-        '    {"green", 255},
-        '    {"blue", 0}}
-
-        Dim jHundoColor As New JObject From {
-            New JProperty("red", 0),
-            New JProperty("green", 255),
-            New JProperty("blue", 0)}
-
-        'Dim jGradient As New JObject From {
-        '    {"zero", jZeroColor},
-        '    {"hundred", jHundoColor}}
-
-        Dim jGradient As New JObject From {
-            New JProperty("zero", jZeroColor),
-            New JProperty("hundred", jHundoColor)}
-
-        'Dim jColor As New JObject From {
-        '    {"gradient", jGradient}}
-
-        Dim jColor As New JObject From {
-            New JProperty("gradient", jGradient)}
-
-        'hdKbd.Add({"color", jColor})
-        hdKbd.Add(New JProperty("color", jColor))
-        'hdArr.Add(hdKbd.   ' stopped here, don't comment this
-        'mainBinding.Add("handlers", hdArr)
-        mainBinding.Add(New JProperty("handlers", hdArr))
-        ExecutePost(SSE3_URL, mainBinding.ToString())
+    End Sub
 
 
+    Private Sub BindEvent()
+
+        Dim json As String = "
+            {
+                ""game"": ""MY_MAIN"",
+                ""event"": ""CHANGE_COLOR"",
+                ""handlers"": [
+                {
+                    ""device-type"": ""keyboard"",
+                    ""zone"": ""function-keys"",
+                    ""color"": {""gradient"": {""zero"": {""red"": 255, ""green"": 0, ""blue"": 0},
+                                               ""hundred"": {""red"": 0, ""green"": 255, ""blue"": 0}}},
+                    ""mode"": ""color""
+                }]
+            }"
+
+        ExecutePost(SSE3_URL & "/bind_game_event", json)
+
+    End Sub
+
+
+
+
+    Private Sub RegisterExe()
+
+        'Dim json As String = "
+        '    {
+        '        ""game"": ""MYMAIN"",
+        '        ""game_display_name"": ""testing"",
+        '        ""developer"": ""me""
+        '    }"
+
+        Dim jobj As New JObject
+        jobj.Add("game", "MY_MAIN")
+        jobj.Add("game_display_name", "testing")
+
+        ExecutePost(SSE3_URL & "/game_metadata", jobj.ToString(Newtonsoft.Json.Formatting.None))
 
     End Sub
 
