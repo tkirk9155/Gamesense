@@ -10,25 +10,28 @@ Module modMain
     Public SSE3_URL As String
     Private threadHeartbeat As Thread
 
+    Public _allEvents As New List(Of LispEvent) From {
+        }
+
     Public Function GetSSE3Address() As Boolean
 
-        'Dim result As Boolean = False
-        'Dim jsonAddressStr As String = String.Empty
-        'Dim corePropsFileNm As String = Environment.GetEnvironmentVariable("ProgramData") & "\\SteelSeries\\SteelSeries Engine 3\\coreProps.json"
+        Dim result As Boolean = False
+        Dim jsonAddressStr As String = String.Empty
+        Dim corePropsFileNm As String = Environment.GetEnvironmentVariable("ProgramData") & "\\SteelSeries\\SteelSeries Engine 3\\coreProps.json"
 
-        'jsonAddressStr = My.Computer.FileSystem.ReadAllText(corePropsFileNm)
+        jsonAddressStr = My.Computer.FileSystem.ReadAllText(corePropsFileNm)
 
-        'Try
-        '    Dim jsonObj As JObject = JObject.Parse(jsonAddressStr)
-        '    SSE3_URL = "http://" & jsonObj.GetValue("address").ToString()
-        '    result = True
-        'Catch ex As Exception
-        '    result = False
-        'End Try
+        Try
+            Dim jsonObj As JObject = JObject.Parse(jsonAddressStr)
+            SSE3_URL = "http://" & jsonObj.GetValue("address").ToString()
+            result = True
+        Catch ex As Exception
+            result = False
+        End Try
 
-        'If SSE3_URL.Length <= 0 Then result = False
+        If SSE3_URL.Length <= 0 Then result = False
 
-        'Return result
+        Return result
 
     End Function
 
@@ -36,7 +39,7 @@ Module modMain
     Public Sub SendKbdEvent()
 
         RegisterExe()
-        BindEvent()
+        RegisterEvent()
         threadHeartbeat = New Thread(AddressOf SendEvent)
         threadHeartbeat.Start()
 
@@ -81,7 +84,13 @@ Module modMain
         {
             ""game"": ""MY_MAIN"",
             ""event"": ""CHANGE_COLOR"",
-            ""data"": { ""percent"": 75}
+            ""data"": 
+            { 
+                ""device-type"": ""keyboard"",
+                ""zone"": ""function-keys"",
+                ""color"": {""red"": 255, ""green"": 0, ""blue"": 0},
+                ""mode"": ""color""
+            }
         }"
 
             ExecutePost(SSE3_URL & "/game_event", json)
@@ -91,20 +100,25 @@ Module modMain
     End Sub
 
 
-    Private Sub BindEvent()
+    Private Sub RegisterEvent()
 
+        'Dim json As String = "
+        '    {
+        '        ""game"": ""MY_MAIN"",
+        '        ""event"": ""CHANGE_COLOR"",
+        '        ""handlers"": [
+        '        {
+        '            ""device-type"": ""keyboard"",
+        '            ""zone"": ""function-keys"",
+        '            ""color"": {""gradient"": {""zero"": {""red"": 255, ""green"": 0, ""blue"": 0},
+        '                                       ""hundred"": {""red"": 0, ""green"": 255, ""blue"": 0}}},
+        '            ""mode"": ""color""
+        '        }]
+        '    }"
         Dim json As String = "
             {
                 ""game"": ""MY_MAIN"",
                 ""event"": ""CHANGE_COLOR"",
-                ""handlers"": [
-                {
-                    ""device-type"": ""keyboard"",
-                    ""zone"": ""function-keys"",
-                    ""color"": {""gradient"": {""zero"": {""red"": 255, ""green"": 0, ""blue"": 0},
-                                               ""hundred"": {""red"": 0, ""green"": 255, ""blue"": 0}}},
-                    ""mode"": ""color""
-                }]
             }"
 
         ExecutePost(SSE3_URL & "/bind_game_event", json)
@@ -130,5 +144,6 @@ Module modMain
         ExecutePost(SSE3_URL & "/game_metadata", jobj.ToString(Newtonsoft.Json.Formatting.None))
 
     End Sub
+
 
 End Module

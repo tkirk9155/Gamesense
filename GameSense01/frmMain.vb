@@ -7,16 +7,7 @@ Public Class frmMain
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles Me.Load
 
-        If Not GetSSE3Address() Then
-            MessageBox.Show("Couldn't find coreProps.json!",
-                            "error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error)
-        Else
-            SendKbdEvent()
-        End If
-
-        lstSteps.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize)
+        lstZone1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize)
 
         For Each control In pnlEdit.Controls
             control.Enabled = False
@@ -26,12 +17,12 @@ Public Class frmMain
 
 
 
-    Private Sub lstSteps_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lstSteps.SelectedIndexChanged
+    Private Sub lstSteps_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lstZone1.SelectedIndexChanged
 
-        If lstSteps.SelectedItems.Count > 0 Then selectedIndex = lstSteps.SelectedItems(0).Index
+        If lstZone1.SelectedItems.Count > 0 Then selectedIndex = lstZone1.SelectedItems(0).Index
 
-        With lstSteps.Items(selectedIndex)
-            lblColorPicker.BackColor = lstSteps.Items(selectedIndex).SubItems(0).BackColor
+        With lstZone1.Items(selectedIndex)
+            lblColorPicker.BackColor = lstZone1.Items(selectedIndex).SubItems(0).BackColor
             If Not Double.TryParse(.SubItems(1).Text, txtDuration.Value) Then txtDuration.Value = 0
             If Not Double.TryParse(.SubItems(2).Text, txtFadeDuration.Value) Then txtFadeDuration.Value = 0
         End With
@@ -46,10 +37,10 @@ Public Class frmMain
         lvi.Text = ""
         lvi.SubItems.Add("0")
         lvi.SubItems.Add("0")
-        lstSteps.Items.Add(lvi).UseItemStyleForSubItems = False
-        selectedIndex = lstSteps.Items.Count - 1
+        lstZone1.Items.Add(lvi).UseItemStyleForSubItems = False
+        selectedIndex = lstZone1.Items.Count - 1
 
-        If lstSteps.Items.Count >= 1 Then
+        If lstZone1.Items.Count >= 1 Then
             For Each control In pnlEdit.Controls
                 control.Enabled = True
             Next
@@ -61,21 +52,53 @@ Public Class frmMain
 
         If colorDialog.ShowDialog() = DialogResult.OK Then
             lblColorPicker.BackColor = colorDialog.Color
-            lstSteps.Items(selectedIndex).SubItems(0).BackColor = colorDialog.Color
+            lstZone1.Items(selectedIndex).SubItems(0).BackColor = colorDialog.Color
         End If
 
     End Sub
 
     Private Sub txtDuration_ValueChanged(sender As Object, e As EventArgs) Handles txtDuration.ValueChanged
 
-        lstSteps.Items(selectedIndex).SubItems(1).Text = txtDuration.Value.ToString()
+        lstZone1.Items(selectedIndex).SubItems(1).Text = txtDuration.Value.ToString()
 
     End Sub
 
     Private Sub txtFadeDuration_ValueChanged(sender As Object, e As EventArgs) Handles txtFadeDuration.ValueChanged
 
-        lstSteps.Items(selectedIndex).SubItems(2).Text = txtFadeDuration.Value.ToString()
+        lstZone1.Items(selectedIndex).SubItems(2).Text = txtFadeDuration.Value.ToString()
 
     End Sub
+
+    Private Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
+
+        BuildLispEvents()
+
+        If Not GetSSE3Address() Then
+            MessageBox.Show("Couldn't find coreProps.json!",
+                            "error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error)
+        Else
+            SendKbdEvent()
+        End If
+
+    End Sub
+
+
+
+    Private Sub BuildLispEvents()
+
+        For Each item As ListViewItem In lstZone1.Items
+            _allEvents.Add(New LispEvent(1,
+                                         "MY_MAIN",
+                                         item.SubItems(0).BackColor.R,
+                                         item.SubItems(0).BackColor.B,
+                                         item.SubItems(0).BackColor.G,
+                                         item.SubItems(1).Text,
+                                         item.SubItems(2).Text))
+        Next
+
+    End Sub
+
 
 End Class
