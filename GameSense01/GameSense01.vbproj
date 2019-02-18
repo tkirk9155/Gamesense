@@ -77,6 +77,13 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EventCollection.vb" />
+    <Compile Include="EventViewer.Designer.vb">
+      <DependentUpon>EventViewer.vb</DependentUpon>
+    </Compile>
+    <Compile Include="EventViewer.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="frmMain.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -103,6 +110,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="EventViewer.resx">
+      <DependentUpon>EventViewer.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.vb</DependentUpon>
     </EmbeddedResource>

@@ -30,3 +30,4 @@ C:\Users\tkirk\Desktop\Gamesense\GameSense01\obj\Debug\GameSense01.vbproj.CopyCo
 C:\Users\tkirk\Desktop\Gamesense\GameSense01\obj\Debug\GameSense01.exe
 C:\Users\tkirk\Desktop\Gamesense\GameSense01\obj\Debug\GameSense01.xml
 C:\Users\tkirk\Desktop\Gamesense\GameSense01\obj\Debug\GameSense01.pdb
+C:\Users\Cadie\source\repos\GameSense01\GameSense01\obj\Debug\GameSense01.EventViewer.resources

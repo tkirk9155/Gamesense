@@ -2,29 +2,47 @@
 
 Public Class frmMain
 
-    Private selectedIndex As Integer
+    Private _selectedIndex As Integer
+    Private _loading As Boolean = True
+
+    Private WithEvents lstZone1 As New EventViewer With {.Dock = DockStyle.Fill}
+    Private WithEvents lstZone2 As New EventViewer With {.Dock = DockStyle.Fill}
+    Private WithEvents lstZone3 As New EventViewer With {.Dock = DockStyle.Fill}
+    Private WithEvents lstZone4 As New EventViewer With {.Dock = DockStyle.Fill}
+    Private WithEvents lstZone5 As New EventViewer With {.Dock = DockStyle.Fill}
 
 
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles Me.Load
 
-        lstZone1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize)
+        _loading = True
+
+        tabZone1.Controls.Add(lstZone1)
+        tabZone2.Controls.Add(lstZone2)
+        tabZone3.Controls.Add(lstZone3)
+        tabZone4.Controls.Add(lstZone4)
+        tabZone5.Controls.Add(lstZone5)
 
         For Each control In pnlEdit.Controls
             control.Enabled = False
         Next
+        _loading = False
 
     End Sub
 
 
 
-    Private Sub lstSteps_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lstZone1.SelectedIndexChanged
+    Private Sub SelectionChanged(sender As Object, e As EventArgs) Handles lstZone1.SelectedIndexChanged,
+                                                                           lstZone2.SelectedIndexChanged,
+                                                                           lstZone3.SelectedIndexChanged,
+                                                                           lstZone4.SelectedIndexChanged,
+                                                                           lstZone5.SelectedIndexChanged
 
-        If lstZone1.SelectedItems.Count > 0 Then selectedIndex = lstZone1.SelectedItems(0).Index
-
-        With lstZone1.Items(selectedIndex)
-            lblColorPicker.BackColor = lstZone1.Items(selectedIndex).SubItems(0).BackColor
-            If Not Double.TryParse(.SubItems(1).Text, txtDuration.Value) Then txtDuration.Value = 0
-            If Not Double.TryParse(.SubItems(2).Text, txtFadeDuration.Value) Then txtFadeDuration.Value = 0
+        With tabMain.SelectedTab.Controls.OfType(Of EventViewer).First()
+            'If .lstArgb.Items(.lstArgb.SelectedIndex).ToString().Length <= 0 Then
+            Dim i As Integer = .lstArgb.SelectedIndex
+            lblColorPicker.BackColor = If(.lstArgb.Items(i).ToString().Length > 0, Color.FromArgb(.lstArgb.Items(i)), Color.Transparent)
+            txtDuration.Value = .lstDuration.Items(i)
+            txtFadeDuration.Value = .lstFadeDuration.Items(i)
         End With
 
     End Sub
@@ -33,18 +51,14 @@ Public Class frmMain
 
     Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
 
-        Dim lvi As New ListViewItem
-        lvi.Text = ""
-        lvi.SubItems.Add("0")
-        lvi.SubItems.Add("0")
-        lstZone1.Items.Add(lvi).UseItemStyleForSubItems = False
-        selectedIndex = lstZone1.Items.Count - 1
+        With tabMain.SelectedTab.Controls.OfType(Of EventViewer).First()
+            .AddItem()
+            .lstArgb.SelectedIndex = .lstArgb.Items.Count - 1
+        End With
 
-        If lstZone1.Items.Count >= 1 Then
-            For Each control In pnlEdit.Controls
-                control.Enabled = True
-            Next
-        End If
+        For Each control In pnlEdit.Controls
+            control.Enabled = True
+        Next
 
     End Sub
 
@@ -52,26 +66,35 @@ Public Class frmMain
 
         If colorDialog.ShowDialog() = DialogResult.OK Then
             lblColorPicker.BackColor = colorDialog.Color
-            lstZone1.Items(selectedIndex).SubItems(0).BackColor = colorDialog.Color
+            With tabMain.SelectedTab.Controls.OfType(Of EventViewer).First()
+                .lstArgb.Items(.lstArgb.SelectedIndex) = lblColorPicker.BackColor.ToArgb().ToString()
+                .lstColor.Refresh()
+            End With
         End If
 
     End Sub
 
     Private Sub txtDuration_ValueChanged(sender As Object, e As EventArgs) Handles txtDuration.ValueChanged
 
-        lstZone1.Items(selectedIndex).SubItems(1).Text = txtDuration.Value.ToString()
+        If _loading Then Exit Sub
+        With tabMain.SelectedTab.Controls.OfType(Of EventViewer).First().lstDuration
+            .Items(.SelectedIndex) = txtDuration.Value.ToString()
+        End With
 
     End Sub
 
     Private Sub txtFadeDuration_ValueChanged(sender As Object, e As EventArgs) Handles txtFadeDuration.ValueChanged
 
-        lstZone1.Items(selectedIndex).SubItems(2).Text = txtFadeDuration.Value.ToString()
+        If _loading Then Exit Sub
+        With tabMain.SelectedTab.Controls.OfType(Of EventViewer).First().lstFadeDuration
+            .Items(.SelectedIndex) = txtFadeDuration.Value.ToString()
+        End With
 
     End Sub
 
     Private Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
 
-        BuildLispEvents()
+        'BuildLispEvents()
 
         If Not GetSSE3Address() Then
             MessageBox.Show("Couldn't find coreProps.json!",
@@ -79,7 +102,12 @@ Public Class frmMain
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error)
         Else
-            SendKbdEvent()
+            RegisterExe()
+            BuildLispEvents()
+            RegisterEvents()
+            EventTimer = New Timers.Timer(100)
+            AddHandler EventTimer.Elapsed, AddressOf EventTimer_Tick
+            EventTimer.Start()
         End If
 
     End Sub
@@ -88,14 +116,35 @@ Public Class frmMain
 
     Private Sub BuildLispEvents()
 
-        For Each item As ListViewItem In lstZone1.Items
-            _allEvents.Add(New LispEvent(1,
-                                         "MY_MAIN",
-                                         item.SubItems(0).BackColor.R,
-                                         item.SubItems(0).BackColor.B,
-                                         item.SubItems(0).BackColor.G,
-                                         item.SubItems(1).Text,
-                                         item.SubItems(2).Text))
+        If Not EventTimer Is Nothing Then
+            EventTimer.Stop()
+            EventTimer = Nothing
+            EventTimer.Dispose()
+        End If
+
+        AllEvents = New List(Of List(Of LispEvent))
+
+        For i As Integer = 0 To (tabMain.TabPages.Count - 1)
+
+            Dim currentTab As EventViewer = CType(tabMain.TabPages(i).Controls.OfType(Of EventViewer).First(), EventViewer)
+            AllEvents.Add(New List(Of LispEvent))
+
+            With currentTab
+
+                For x As Integer = 0 To (.lstArgb.Items.Count - 1)
+                    AllEvents(i).Add(New LispEvent(x + 1,
+                                                   "MY_MAIN",
+                                                   Color.FromArgb(.lstArgb.Items(x)),
+                                                   .lstDuration.Items(x),
+                                                   .lstFadeDuration.Items(x)))
+                Next
+
+            End With
+
+        Next
+
+        For Each eventList As List(Of LispEvent) In AllEvents
+            If eventList.Count > 0 Then eventList(0).Active = True
         Next
 
     End Sub

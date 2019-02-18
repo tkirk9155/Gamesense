@@ -9,9 +9,10 @@ Module modMain
 
     Public SSE3_URL As String
     Private threadHeartbeat As Thread
+    Public EventTimer As System.Timers.Timer
+    Private timeElapsed As Integer = 0
 
-    Public _allEvents As New List(Of LispEvent) From {
-        }
+    Public WithEvents AllEvents As List(Of List(Of LispEvent))
 
     Public Function GetSSE3Address() As Boolean
 
@@ -35,15 +36,6 @@ Module modMain
 
     End Function
 
-
-    Public Sub SendKbdEvent()
-
-        RegisterExe()
-        RegisterEvent()
-        threadHeartbeat = New Thread(AddressOf SendEvent)
-        threadHeartbeat.Start()
-
-    End Sub
 
 
     Private Sub ExecutePost(ByVal sse3Address As String, ByVal jsonData As String)
@@ -77,65 +69,19 @@ Module modMain
 
 
 
-    Private Sub SendEvent()
-
-        While True
-            Dim json As String = "
-        {
-            ""game"": ""MY_MAIN"",
-            ""event"": ""CHANGE_COLOR"",
-            ""data"": 
-            { 
-                ""device-type"": ""keyboard"",
-                ""zone"": ""function-keys"",
-                ""color"": {""red"": 255, ""green"": 0, ""blue"": 0},
-                ""mode"": ""color""
-            }
-        }"
-
-            ExecutePost(SSE3_URL & "/game_event", json)
-            Thread.Sleep(2000)
-        End While
-
+    Private Sub SendEvent(ByVal eventData As String)
+        ExecutePost(SSE3_URL & "/game_event", eventData)
     End Sub
 
-
-    Private Sub RegisterEvent()
-
-        'Dim json As String = "
-        '    {
-        '        ""game"": ""MY_MAIN"",
-        '        ""event"": ""CHANGE_COLOR"",
-        '        ""handlers"": [
-        '        {
-        '            ""device-type"": ""keyboard"",
-        '            ""zone"": ""function-keys"",
-        '            ""color"": {""gradient"": {""zero"": {""red"": 255, ""green"": 0, ""blue"": 0},
-        '                                       ""hundred"": {""red"": 0, ""green"": 255, ""blue"": 0}}},
-        '            ""mode"": ""color""
-        '        }]
-        '    }"
-        Dim json As String = "
-            {
-                ""game"": ""MY_MAIN"",
-                ""event"": ""CHANGE_COLOR"",
-            }"
-
-        ExecutePost(SSE3_URL & "/bind_game_event", json)
-
+    Public Sub RegisterEvents()
+        For Each eventList As List(Of LispEvent) In AllEvents.Where(Function(x) x.Count > 0)
+            ExecutePost(SSE3_URL & "/load_golisp_handlers", eventList.First().RegisterString)
+        Next
     End Sub
 
 
 
-
-    Private Sub RegisterExe()
-
-        'Dim json As String = "
-        '    {
-        '        ""game"": ""MYMAIN"",
-        '        ""game_display_name"": ""testing"",
-        '        ""developer"": ""me""
-        '    }"
+    Public Sub RegisterExe()
 
         Dim jobj As New JObject
         jobj.Add("game", "MY_MAIN")
@@ -144,6 +90,34 @@ Module modMain
         ExecutePost(SSE3_URL & "/game_metadata", jobj.ToString(Newtonsoft.Json.Formatting.None))
 
     End Sub
+
+
+
+    Public Sub EventTimer_Tick(sender As Object, e As System.Timers.ElapsedEventArgs)
+
+        For Each list As List(Of LispEvent) In AllEvents
+            If list.Count > 0 Then
+                Dim i As Integer = list.IndexOf(list.First(Function(x) x.Active))
+                With list(i)
+
+                    If .Duration >= timeElapsed Then
+
+                        Dim n As Integer = If(i < (list.Count - 1), i + 1, 0)
+
+                        ExecutePost(SSE3_URL & "/game_event", .Update(list(n).Red, list(n).Blue, list(n).Green))
+                        If Not .Active Then list(n).Active = True
+
+                    End If
+
+                End With
+            End If
+        Next
+
+        timeElapsed += 100
+
+    End Sub
+
+
 
 
 End Module
