@@ -105,7 +105,7 @@ Public Class frmMain
             RegisterExe()
             BuildLispEvents()
             RegisterEvents()
-            EventTimer = New Timers.Timer(100)
+            EventTimer = New Timers.Timer(1000)
             AddHandler EventTimer.Elapsed, AddressOf EventTimer_Tick
             EventTimer.Start()
         End If

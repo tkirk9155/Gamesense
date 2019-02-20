@@ -100,14 +100,12 @@ Module modMain
                 Dim i As Integer = list.IndexOf(list.First(Function(x) x.Active))
                 With list(i)
 
-                    If .Duration >= timeElapsed Then
+                    Dim n As Integer = If(i < (list.Count - 1), i + 1, 0)
 
-                        Dim n As Integer = If(i < (list.Count - 1), i + 1, 0)
+                    ExecutePost(SSE3_URL & "/game_event", .Update(list(n).Red, list(n).Blue, list(n).Green))
+                    If Not .Active Then list(n).Active = True
 
-                        ExecutePost(SSE3_URL & "/game_event", .Update(list(n).Red, list(n).Blue, list(n).Green))
-                        If Not .Active Then list(n).Active = True
-
-                    End If
+                    'End If
 
                 End With
             End If

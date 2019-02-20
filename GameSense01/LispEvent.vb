@@ -2,27 +2,23 @@
 
 Public Class LispEvent
 
-    Public Red As Integer = 0
-    Public Blue As Integer = 0
-    Public Green As Integer = 0
+    Public Red As Integer
+    Public Blue As Integer
+    Public Green As Integer
 
-    Private baseRed As Integer
-    Private baseBlue As Integer
-    Private baseGreen As Integer
-
-    Public Duration As Integer = 0
-    Public Fade As Integer = 0
+    Public Duration As Integer
+    Public Fade As Integer
 
     Public Active As Boolean
 
-    Private _currentColor As Color
+    Private _baseColor As Color
 
     Public RegisterString As String = ""
     Private _eventString As String = ""
     Private _gameName As String = ""
     Private _zoneName As String = ""
 
-    Private _timeElapsed As Integer
+    Public EventTimeElapsed As Integer
 
     Public Property EventString As String
         Get
@@ -42,13 +38,11 @@ Public Class LispEvent
         Red = pColor.R
         Blue = pColor.B
         Green = pColor.G
-        baseRed = pColor.R
-        baseBlue = pColor.B
-        baseGreen = pColor.G
+        _baseColor = pColor
+
+        EventTimeElapsed = 0
         Duration = durationMilliseconds
         Fade = fadeMilliseconds
-
-        _currentColor = pColor
 
         Dim zoneText As String = ""
 
@@ -73,8 +67,8 @@ Public Class LispEvent
         jobj.Add("golisp", "(handler " & _zoneName & "
                     (lambda (data)
                         (let* ((v (value: data))
-                        (h (color->list v))))
-                            (on-device 'rgb-5-zone show-on-zone: v " & zoneText & ":))))")
+                        (h (color->list v)))
+                            (on-device 'rgb-5-zone show-on-zone: 'h " & zoneText & ":))))")
         RegisterString = jobj.ToString(Newtonsoft.Json.Formatting.None)
 
 
@@ -83,7 +77,7 @@ Public Class LispEvent
 
     Public Function Update(ByVal fadeRed As Integer, ByVal fadeBlue As Integer, ByVal fadeGreen As Integer) As String
 
-        If Fade > 0 Then
+        If EventTimeElapsed >= Duration AndAlso Fade > 0 Then
             Dim fadeValue As Integer = Fade / 100
             Dim interval As Integer = (fadeRed - Red) / fadeValue
             Red += interval
@@ -95,12 +89,14 @@ Public Class LispEvent
 
         Dim result As String = BuildJObject()
 
-        If _timeElapsed >= Duration + Fade Then
+        EventTimeElapsed += 100
+
+        If EventTimeElapsed >= Duration + Fade Then
             Active = False
-            _timeElapsed = 0
-            Red = baseRed
-            Blue = baseBlue
-            Green = baseGreen
+            EventTimeElapsed = 0
+            Red = _baseColor.R
+            Blue = _baseColor.B
+            Green = _baseColor.G
         End If
 
         Return result
@@ -110,16 +106,10 @@ Public Class LispEvent
 
     Private Function BuildJObject() As String
 
-
-
-        'Dim result As String = "{
-        '        ""game"": """ & _gameName & """,
-        '        ""event"":" & _zoneName & ",
-        '        ""data"": {""value"": ""(" & Red.ToString() & " " & Blue.ToString() & " " & Green.ToString() & ")""}}"
         Dim result As String = "{
                 ""game"": """ & _gameName & """,
                 ""event"":" & _zoneName & ",
-                ""data"": {""value"": """ & String.Format(_currentColor.ToArgb(), "x") & """}}"
+                ""data"": {""value"": """ & Hex(Color.FromArgb(Red, Blue, Green).ToArgb()).Substring(2).Insert(0, "#") & """}}"
 
         Return JObject.Parse(result).ToString(Newtonsoft.Json.Formatting.None)
 
